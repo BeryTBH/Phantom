@@ -246,7 +246,8 @@ local function estimateMotionFromHistory(tracker, fallbackVelocity, options)
 	if vel.Magnitude < 0.01 then
 		vel = derivedVel
 	else
-		vel = vel:Lerp(derivedVel, 0.45)
+		local blend = math.min(derivedVel.Magnitude / math.max(vel.Magnitude, eps), 1)
+		vel = vel:Lerp(derivedVel, 0.45 * blend)
 	end
 
 	if #s >= 3 then

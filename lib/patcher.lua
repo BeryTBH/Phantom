@@ -212,9 +212,6 @@ local function done(o, d)
     rv.phantomExecutor.lastCheckedAt = o.checkedAt
     rv.phantomExecutor.executorName = o.executorName
     rv.__phantomPatcherDone = true
-
-    local p = "[phantom patcher]"
-    if o.reason then print(p .. " reason: " .. tostring(o.reason)) end
     return o
 end
 

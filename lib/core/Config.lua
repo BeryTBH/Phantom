@@ -1,6 +1,8 @@
 local Config = {}
 Config.__index = Config
 
+local HttpService = game:GetService("HttpService")
+
 local function deepCopy(value)
 	if type(value) ~= "table" then
 		return value
@@ -100,6 +102,63 @@ function Config:ScheduleProfileSave(placeId, slot, data, delaySeconds)
 		end
 		self:SaveProfile(placeId, slot, data)
 	end)
+end
+
+function Config:ExportProfile(placeId, slot)
+	local path = string.format("configs/%s/%s.json", tostring(placeId), slot or "default")
+	local contents = self.file:Read(path, nil)
+	if not contents then
+		return nil, "profile not found"
+	end
+	return contents
+end
+
+function Config:ImportProfile(placeId, slot, jsonString, options)
+	options = options or {}
+	local path = string.format("configs/%s/%s.json", tostring(placeId), slot or "default")
+
+	local ok, parsed = pcall(function() return HttpService:JSONDecode(jsonString or "") end)
+	if not ok then
+		return false, "invalid json"
+	end
+
+	if not options.force and self.file:IsFile(path) then
+		if type(self.prompt) == "function" then
+			self.prompt({
+				title = "Import Profile",
+				message = string.format("A profile already exists for %s/%s. Overwrite?", tostring(placeId), tostring(slot or "default")),
+				onConfirm = function()
+					self.file:WriteJson(path, parsed, { force = true })
+				end,
+				onCancel = function() end,
+			})
+			return "pending"
+		end
+		return false, "exists"
+	end
+
+	local ok2, err = self.file:WriteJson(path, parsed, { force = true })
+	if not ok2 then
+		return false, err
+	end
+	return true
+end
+
+function Config:SetPromptFunction(fn)
+	self.prompt = fn
+end
+
+function Config:ListProfiles(base)
+	local prefix = string.format("configs/%s", tostring(base))
+	local items = self.file:ListFiles(prefix)
+	local result = {}
+	for _, path in ipairs(items) do
+		local name = path:match("([^/]+)%.json$")
+		if name and not name:match("^Players") and not path:match("temp_ref_") then
+			result[#result+1] = name
+		end
+	end
+	return result
 end
 
 return Config

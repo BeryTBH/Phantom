@@ -88,11 +88,6 @@ local function readFile(path)
 	return nil
 end
 
-local function writeFile(path, contents)
-	ensureParent(path)
-	return pcall(writefile, resolve(path), contents)
-end
-
 local function readJson(path, defaultValue)
 	local contents = readFile(path)
 	if not contents or contents == "" then
@@ -105,16 +100,6 @@ local function readJson(path, defaultValue)
 		return decoded
 	end
 	return defaultValue
-end
-
-local function writeJson(path, value)
-	local ok, encoded = pcall(function()
-		return HttpService:JSONEncode(value)
-	end)
-	if not ok then
-		return false, encoded
-	end
-	return writeFile(path, encoded)
 end
 
 local function requestFunction()
@@ -249,7 +234,8 @@ local function applyPatch(entry)
 		source = updated
 	end
 
-	return writeFile(entry.path, source)
+	ensureParent(entry.path)
+	return pcall(writefile, resolve(entry.path), source)
 end
 
 local function isPreserved(path)
@@ -480,7 +466,8 @@ local function applyUpdatePlan(manifest, plan)
 		if not ok then
 			local downloaded, body = httpGet(downloadUrl(manifest, entry))
 			if downloaded then
-				ok, result = writeFile(entry.path, body)
+				ensureParent(entry.path)
+				ok, result = pcall(writefile, resolve(entry.path), body)
 			else
 				ok, result = false, body
 			end
@@ -505,7 +492,11 @@ if remoteManifest then
 		ui:Destroy()
 	elseif #plan.toDownload == 0 then
 		updateStatus = "up-to-date"
-		writeJson("cache/release-manifest.json", remoteManifest)
+		local ok, encoded = pcall(HttpService.JSONEncode, HttpService, remoteManifest)
+		if ok then
+			ensureParent("cache/release-manifest.json")
+			pcall(writefile, resolve("cache/release-manifest.json"), encoded)
+		end
 		ui:SetStatus("Up to date")
 		ui:SetProgress(1, 1, LOADER_DISPLAY_ID)
 		ui:Destroy()
@@ -513,7 +504,11 @@ if remoteManifest then
 		updateStatus = "updated"
 		local failures = applyUpdatePlan(remoteManifest, plan)
 		if #failures == 0 then
-			writeJson("cache/release-manifest.json", remoteManifest)
+			local ok, encoded = pcall(HttpService.JSONEncode, HttpService, remoteManifest)
+			if ok then
+				ensureParent("cache/release-manifest.json")
+				pcall(writefile, resolve("cache/release-manifest.json"), encoded)
+			end
 			ui:SetStatus("Update complete")
 			ui:Destroy()
 		else

@@ -184,6 +184,9 @@ function Hook:Bind(fn)
     local id   = self._seq
     local slots = self._slots
     slots[id] = fn
+
+    pcall(fn)
+
     return {
         Active     = true,
         Unbind = function(self)
@@ -2914,12 +2917,13 @@ function Spectrum.window(cfg)
             local glowColor = entry.Enabled and lighten(P.HUE, 0.12) or (rowHovered and P.EDGE_HI or darken(P.BASE2, 0.18))
             local labelColor = entry.Enabled and P.INK_HI or (rowHovered and P.INK_HI or P.INK_MID)
             local extraColor = entry.Bind and P.HUE or (entry.Enabled and P.INK_HI or P.INK_LOW)
-            local arrowColor = entry.Enabled and P.INK_HI
-                or (entry.Expanded and P.INK_MID or P.INK_LOW)
+            local arrowColor = entry.Enabled and P.INK_HI or (entry.Expanded and P.INK_MID or P.INK_LOW)
             local strokeColor = entry.Enabled and P.EDGE_HI or (rowHovered and P.EDGE_HI or P.EDGE)
             local strokeTransparency = entry.Enabled and 0.08 or (rowHovered and 0.18 or 0.36)
             local targetRotation = entry.Expanded and 0 or 180
 
+
+            --omf i forgot about the dis shi
             if instant then
                 Row.BackgroundColor3 = rowColor
                 RowGlow.BackgroundColor3 = glowColor
@@ -2929,21 +2933,9 @@ function Spectrum.window(cfg)
                 RowArrow.Rotation = targetRotation
                 RowEdge.Color = strokeColor
                 RowEdge.Transparency = strokeTransparency
-            else
-                playTween(Row, hoverTI, { BackgroundColor3 = rowColor })
-                playTween(RowGlow, accentTI, { BackgroundColor3 = glowColor })
-                playTween(RowLabel, accentTI, { TextColor3 = labelColor })
-                playTween(RowExtra, accentTI, { TextColor3 = extraColor })
-                playTween(RowArrow, accentTI, {
-                    ImageColor3 = arrowColor,
-                    Rotation = targetRotation,
-                })
-                playTween(RowEdge, accentTI, {
-                    Color = strokeColor,
-                    Transparency = strokeTransparency,
-                })
             end
         end
+
         local function renderSubHolder(instant)
             local scale = (Scaler.Scale > 0 and Scaler.Scale or 1)
             local optionSize = OptionFlow.AbsoluteContentSize

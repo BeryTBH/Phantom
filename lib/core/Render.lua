@@ -186,7 +186,7 @@ function Render:_buildGui(versionText)
 	})
 	addCorner(header, 18)
 	addStroke(header, self.Theme.Border, 0.35)
-	addPadding(header, 0, 0, 18, 18)
+	addPadding(header, 0, 0, 14, 14)
 
 	local headerMask = create("Frame", {
 		Parent = header,
@@ -248,8 +248,8 @@ function Render:_buildGui(versionText)
 		Parent = main,
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
-		Position = UDim2.new(0, 14, 0, 68),
-		Size = UDim2.new(1, -28, 1, -84),
+		Position = UDim2.new(0, 10, 0, 64),
+		Size = UDim2.new(1, -20, 1, -76),
 		CanvasSize = UDim2.new(),
 		ScrollBarThickness = 4,
 		VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar,
@@ -261,17 +261,17 @@ function Render:_buildGui(versionText)
 	local panelList = Instance.new("UIListLayout")
 	panelList.FillDirection = Enum.FillDirection.Horizontal
 	panelList.SortOrder = Enum.SortOrder.LayoutOrder
-	panelList.Padding = UDim.new(0, 12)
+	panelList.Padding = UDim.new(0, 8)
 	panelList.Parent = panelHost
 
 	local toastHost = create("Frame", {
 		Parent = root,
 		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, -18, 0, 18),
-		Size = UDim2.new(0, 320, 1, -36),
+		Position = UDim2.new(1, -14, 0, 14),
+		Size = UDim2.new(0, 320, 1, -28),
 		BackgroundTransparency = 1,
 	})
-	local toastLayout = addListLayout(toastHost, 10)
+	local toastLayout = addListLayout(toastHost, 8)
 	toastLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
 
 	local tooltip = create("Frame", {
@@ -285,7 +285,7 @@ function Render:_buildGui(versionText)
 	})
 	addCorner(tooltip, 10)
 	addStroke(tooltip, self.Theme.Border, 0.2)
-	addPadding(tooltip, 8, 8, 10, 10)
+	addPadding(tooltip, 6, 6, 8, 8)
 
 	local tooltipLabel = create("TextLabel", {
 		Parent = tooltip,
@@ -390,7 +390,7 @@ function Render:Toast(options)
 	})
 	addCorner(toast, 12)
 	addStroke(toast, self.Theme.Border, 0.15)
-	addPadding(toast, 10, 10, 12, 12)
+	addPadding(toast, 8, 8, 10, 10)
 
 	local list = addListLayout(toast, 4)
 	list.HorizontalAlignment = Enum.HorizontalAlignment.Left
@@ -495,8 +495,8 @@ function Render:CreatePanel(id, title, order)
 		ScrollBarThickness = 3,
 	})
 
-	local list = addListLayout(body, 8)
-	addPadding(body, 2, 8, 2, 6)
+	local list = addListLayout(body, 6)
+	addPadding(body, 0, 6, 0, 4)
 
 	local panel = {
 		Id = id,
@@ -563,7 +563,7 @@ function Render:CreateModule(definition)
 	})
 	addCorner(frame, 12)
 	local stroke = addStroke(frame, self.Theme.Border, 0.25)
-	addPadding(frame, 8, 10, 10, 10)
+	addPadding(frame, 6, 8, 8, 8)
 
 	local header = create("Frame", {
 		Parent = frame,
@@ -700,7 +700,7 @@ function Render:_createToggle(definition, key)
 	})
 	addCorner(frame, 10)
 	addStroke(frame, self.Theme.Border, 0.35)
-	addPadding(frame, 0, 0, 10, 8)
+	addPadding(frame, 0, 0, 8, 6)
 
 	local title = create("TextLabel", {
 		Parent = frame,
@@ -849,7 +849,7 @@ function Render:_createSlider(definition, key)
 	})
 	addCorner(frame, 10)
 	addStroke(frame, self.Theme.Border, 0.35)
-	addPadding(frame, 8, 8, 10, 10)
+	addPadding(frame, 6, 6, 8, 8)
 
 	local title = create("TextLabel", {
 		Parent = frame,
@@ -994,7 +994,7 @@ function Render:_createDropdown(definition, key)
 	})
 	addCorner(frame, 10)
 	local stroke = addStroke(frame, self.Theme.Border, 0.35)
-	addPadding(frame, 8, 8, 10, 10)
+	addPadding(frame, 6, 6, 8, 8)
 
 	local header = create("TextButton", {
 		Parent = frame,

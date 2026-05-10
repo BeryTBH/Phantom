@@ -18,11 +18,11 @@ local executorQueueOnTeleportLegacy = environment.queueonteleport or _genv.queue
 local customSignal = Instance.new("BindableEvent")
 
 if not executorGetEnv or not executorIsFile or not executorReadFile then
-	return warn("[phantom] unsupported executor.")
+	cloneref(game:GetService("Players")).LocalPlayer:Kick("unsupported executor")
+	return nil
 end
 
 local ROOT = "Phantom"
-
 local function service(name)
 	local instance = game:GetService(name)
 	if executorCloneRef then
@@ -190,18 +190,19 @@ end
 
 local function syncExecutorContextFromEnv()
 	env.phantomExecutor = type(env.phantomExecutor) == "table" and env.phantomExecutor or {}
+	
+	local executor = env.phantomExecutor
 	if type(env.phantomExecutorInfo) == "table" then
-		env.phantomExecutor.info = env.phantomExecutorInfo
+		executor.info = env.phantomExecutorInfo
 	end
 	if type(env.phantomMissingMainFunctions) == "table" then
-		env.phantomExecutor.missingMainLookup = env.phantomMissingMainFunctions
+		executor.missingMainLookup = env.phantomMissingMainFunctions
 	end
 	if env.phantomIsBadExecutor ~= nil then
-		env.phantomExecutor.isBad = env.phantomIsBadExecutor == true
+		executor.isBad = env.phantomIsBadExecutor == true
 	end
-	if env.phantomExecutor.hideUnsupportedModules == nil then
-		env.phantomExecutor.hideUnsupportedModules = false
-	end
+	
+	executor.hideUnsupportedModules = executor.hideUnsupportedModules == true
 end
 
 setHideBadExecutorModules(readOverlayToggleState("hide bad executor modules", false))
@@ -310,6 +311,105 @@ if not UI then
 	error("[phantom] failed to initialize GuiLibrary")
 end
 
+if config and type(config.SetPromptFunction) == "function" then
+	config:SetPromptFunction(function(opts)
+		local ok, parent = pcall(function()
+			local guiParent = nil
+			if environment and environment.get_hidden_gui then
+				local suc, p = pcall(environment.get_hidden_gui)
+				if suc and p then guiParent = p end
+			end
+			if not guiParent and environment and environment.gethui then
+				local suc, p = pcall(environment.gethui)
+				if suc and p then guiParent = p end
+			end
+			return guiParent or game.CoreGui
+		end)
+		parent = (ok and parent) and parent or game.CoreGui
+
+		local success, promptGui = pcall(function()
+			local gui = Instance.new("ScreenGui")
+			gui.Name = "PhantomConfigPrompt"
+			gui.ResetOnSpawn = false
+			gui.Parent = parent
+
+			local frame = Instance.new("Frame")
+			frame.Size = UDim2.new(0, 420, 0, 152)
+			frame.AnchorPoint = Vector2.new(0.5, 0.5)
+			frame.Position = UDim2.fromScale(0.5, 0.5)
+			frame.BackgroundColor3 = Color3.fromRGB(10, 14, 21)
+			frame.BorderSizePixel = 0
+			frame.Parent = gui
+
+			local title = Instance.new("TextLabel")
+			title.Parent = frame
+			title.BackgroundTransparency = 1
+			title.Position = UDim2.new(0, 12, 0, 8)
+			title.Size = UDim2.new(1, -24, 0, 26)
+			title.Font = Enum.Font.GothamBold
+			title.Text = tostring(opts.title or "Confirm")
+			title.TextColor3 = Color3.fromRGB(241, 235, 226)
+			title.TextSize = 18
+
+			local body = Instance.new("TextLabel")
+			body.Parent = frame
+			body.BackgroundTransparency = 1
+			body.Position = UDim2.new(0, 12, 0, 40)
+			body.Size = UDim2.new(1, -24, 0, 64)
+			body.Font = Enum.Font.Gotham
+			body.Text = tostring(opts.message or "Are you sure?")
+			body.TextColor3 = Color3.fromRGB(165, 174, 190)
+			body.TextSize = 14
+			body.TextWrapped = true
+
+			local btnConfirm = Instance.new("TextButton")
+			btnConfirm.Parent = frame
+			btnConfirm.Position = UDim2.new(0, 24, 1, -46)
+			btnConfirm.Size = UDim2.new(0, 160, 0, 32)
+			btnConfirm.Font = Enum.Font.GothamBold
+			btnConfirm.Text = "Overwrite"
+			btnConfirm.TextSize = 14
+			btnConfirm.TextColor3 = Color3.fromRGB(17, 18, 22)
+			btnConfirm.BackgroundColor3 = Color3.fromRGB(239, 155, 73)
+
+			local btnCancel = Instance.new("TextButton")
+			btnCancel.Parent = frame
+			btnCancel.Position = UDim2.new(1, -184, 1, -46)
+			btnCancel.Size = UDim2.new(0, 160, 0, 32)
+			btnCancel.Font = Enum.Font.Gotham
+			btnCancel.Text = "Cancel"
+			btnCancel.TextSize = 14
+			btnCancel.TextColor3 = Color3.fromRGB(241, 235, 226)
+			btnCancel.BackgroundColor3 = Color3.fromRGB(33, 40, 54)
+
+			btnConfirm.MouseButton1Click:Connect(function()
+				pcall(function()
+					if type(opts.onConfirm) == "function" then
+						opts.onConfirm()
+					end
+				end)
+				if gui and gui.Parent then gui:Destroy() end
+			end)
+			btnCancel.MouseButton1Click:Connect(function()
+				pcall(function()
+					if type(opts.onCancel) == "function" then
+						opts.onCancel()
+					end
+				end)
+				if gui and gui.Parent then gui:Destroy() end
+			end)
+
+			return gui
+		end)
+
+		if not success then
+			if type(opts.onConfirm) == "function" then
+				pcall(opts.onConfirm)
+			end
+		end
+	end)
+end
+
 local function readGuiTheme()
 	local defaults = {
 		H = 0.73,
@@ -348,14 +448,48 @@ local function setGuiPalette(palette)
 	end
 end
 
+local function forceUiRedraw()
+    for _, object in pairs(UI.Registry or {}) do
+        if object.Instance then
+            -- Try to call the library's color update function
+            if object.UpdateColor then
+                pcall(object.UpdateColor)
+            end
+
+            -- Fallback: manually set background/text colors
+            local color = UI.kit:activeColor()
+            if object.Instance:IsA("Frame") or object.Instance:IsA("TextButton") then
+                object.Instance.BackgroundColor3 = color
+            elseif object.Instance:IsA("TextLabel") then
+                object.Instance.TextColor3 = color
+            end
+
+            -- For dropdown options
+            if object.Options and type(object.Options) == "table" then
+                for _, option in pairs(object.Options) do
+                    if option.Background then
+                        option.Background.BackgroundColor3 = color
+                    end
+                    if option.TextLabel then
+                        option.TextLabel.TextColor3 = color
+                    end
+                end
+            end
+        end
+    end
+end
+
+-- Inject this after updating the palette
 local function updateGuiPalette(key, value)
-	local theme = readGuiTheme()
-	theme[key] = value
-	setGuiPalette({
-		H = theme.H,
-		S = theme.S,
-		V = theme.V,
-	})
+    local theme = readGuiTheme()
+    theme[key] = value
+    setGuiPalette({ H = theme.H, S = theme.S, V = theme.V })
+
+    -- Force redraw
+    if UI.PaletteSync then
+        UI.PaletteSync:Emit()
+    end
+    forceUiRedraw()
 end
 
 local lastNonRainbowPalette = nil
@@ -427,10 +561,23 @@ local function setGuiGlowSpeed(speed)
 end
 
 local function bindGuiTheme(callback)
-	callback()
-	if UI.PaletteSync then
-		rootManager:AddConnection(UI.PaletteSync:Bind(callback))
-	end
+	task.spawn(function()
+		local deadline = os.clock() + 5
+		while not uiFullyReady and os.clock() < deadline do
+			task.wait(0.05)
+		end
+		if not uiFullyReady then
+			logger:Warn("bindGuiTheme: timed out waiting for uiFullyReady; proceeding")
+			uiFullyReady = true
+		end
+		local ok, err = pcall(callback)
+		if not ok then
+			logger:Warn("bindGuiTheme: callback error", err)
+		end
+		if UI.PaletteSync then
+			rootManager:AddConnection(UI.PaletteSync:Bind(callback))
+		end
+	end)
 end
 
 local categoryIconMap = {
@@ -509,12 +656,6 @@ if UI.CreateHudConfig then
 	if hudEditor.AddSectionHeader then
 		hudEditor.AddSectionHeader("Visibility")
 	end
-	if hudEditor.AddToggleRow then
-		hudEditor.AddToggleRow("hide bad executor modules", env.phantomHideBadExecutorModules == true, function(on)
-			setHideBadExecutorModules(on)
-			syncExecutorContextFromEnv()
-		end)
-	end
 	if hudEditor.AddSectionHeader then
 		hudEditor.AddSectionHeader("HUD")
 	end
@@ -578,17 +719,6 @@ if UI.CreateConfigBar and hudEditor then
 		if not ok then
 			logger:Warn("configBar.Instance.Visible could not be set during init")
 		end
-	end
-	if hudEditor.AddToggleRow and configBar and configBar.Instance then
-		hudEditor.AddToggleRow("show preset bar", false, function(on)
-			if configBar.SetVisible then
-				configBar.SetVisible(on)
-			else
-				pcall(function()
-					configBar.Instance.Visible = on
-				end)
-			end
-		end)
 	end
 end
 
@@ -1205,11 +1335,15 @@ local function saveProfile(slot)
 		end
 	end
 
-	local ok, err = fileApi:WriteJson(statePath(slot), data, { force = true })
+	local existing = fileApi:ReadJson(statePath(slot), {})
+	for k, v in pairs(data) do
+		existing[k] = v
+	end
+	local ok, err = fileApi:WriteJson(statePath(slot), existing, { force = true })
 	if not ok then
 		logger:Warn("failed to save profile", slot, err)
 	end
-	return data
+	return existing
 end
 
 local function loadProfile(slot, silent)
@@ -1491,6 +1625,11 @@ local function shutdown(reason, options)
 		end
 	end)
 	pcall(function()
+		if customSignal and customSignal.Parent then
+			customSignal:Destroy()
+		end
+	end)
+	pcall(function()
 		rootManager:Cleanup()
 	end)
 
@@ -1519,17 +1658,17 @@ phantom.Shutdown = shutdown
 local function relaunchMain()
 	local source = fileApi:Read("Main.lua")
 	if not source or source == "" then
-		warn("[phantom] Main.lua missing for reload.")
+		logger:Error("Main.lua missing for reload")
 		return false
 	end
 	local chunk, err = loadstring(source, "@Phantom/Main.lua")
 	if not chunk then
-		warn("[phantom] failed to compile Main.lua: " .. tostring(err))
+		logger:Error("failed to compile Main.lua", err)
 		return false
 	end
 	local ok, runtimeError = pcall(chunk)
 	if not ok then
-		warn("[phantom] runtime error: " .. tostring(runtimeError))
+		logger:Error("runtime error during reload", runtimeError)
 		return false
 	end
 	return true
@@ -1692,11 +1831,25 @@ do
 				local api = safeGet(object, "API")
 				if api and type(api.SetEnabled) == "function" then
 					local name = string.lower(tostring(safeGet(object, "Name") or ""))
-					if name == "teamcheck" or name == "team color" or name == "teamcolor" then
+					if name:find("team") or name:find("friendmode") or name:find("friend") then
 						api.SetEnabled(enabled == true, true)
 					end
 				end
 			end
+		end
+		
+		for _, object in next, UI.Registry or {} do
+			local api = safeGet(object, "API")
+			if api and type(api.SetEnabled) == "function" then
+				local name = string.lower(tostring(safeGet(object, "Name") or ""))
+				if name:find("team") or name:find("friendmode") or name:find("friend") then
+					pcall(api.SetEnabled, enabled == true, true)
+				end
+			end
+		end
+		
+		if type(env.phantomTeamSyncEnabled) ~= "boolean" then
+			env.phantomTeamSyncEnabled = enabled == true
 		end
 	end
 
@@ -1980,17 +2133,6 @@ do
 			toggleLegacyGui()
 		end
 	end))
-
-	internalPanel.AddNew({
-		Name = "Hide Unsupported",
-		NoSave = true,
-		Default = env.phantomHideBadExecutorModules == true,
-		Function = function(on)
-			setHideBadExecutorModules(on)
-			syncExecutorContextFromEnv()
-		end,
-		Tooltip = "Hide modules that your current executor cannot fully support.",
-	})
 
 	internalPanel.AddNew({
 		Name = "Hide Scoreboard",

@@ -1281,7 +1281,6 @@ runcode(function()
                 end
             end
         end
-        warn("No new server found, rejoining...")
         doRejoin()
     end
 
