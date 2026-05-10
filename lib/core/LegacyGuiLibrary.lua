@@ -2922,9 +2922,16 @@ function Spectrum.window(cfg)
             local strokeTransparency = entry.Enabled and 0.08 or (rowHovered and 0.18 or 0.36)
             local targetRotation = entry.Expanded and 0 or 180
 
-
-            --omf i forgot about the dis shi
             if instant then
+                Row.BackgroundColor3 = rowColor
+                RowGlow.BackgroundColor3 = glowColor
+                RowLabel.TextColor3 = labelColor
+                RowExtra.TextColor3 = extraColor
+                RowArrow.ImageColor3 = arrowColor
+                RowArrow.Rotation = targetRotation
+                RowEdge.Color = strokeColor
+                RowEdge.Transparency = strokeTransparency
+            else
                 Row.BackgroundColor3 = rowColor
                 RowGlow.BackgroundColor3 = glowColor
                 RowLabel.TextColor3 = labelColor
@@ -2935,7 +2942,6 @@ function Spectrum.window(cfg)
                 RowEdge.Transparency = strokeTransparency
             end
         end
-
         local function renderSubHolder(instant)
             local scale = (Scaler.Scale > 0 and Scaler.Scale or 1)
             local optionSize = OptionFlow.AbsoluteContentSize
