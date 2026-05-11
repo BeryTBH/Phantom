@@ -1585,6 +1585,7 @@ runcode(function()
         Function = function(callback)
             if callback then
                 RunLoops:BindToHeartbeat("Speed", function(dt)
+                    if Fly.Enabled then return end
                     local char = lplr.Character
                     local hum = char and char:FindFirstChildOfClass("Humanoid")
                     local root = char and char:FindFirstChild("HumanoidRootPart")
@@ -1805,8 +1806,8 @@ runcode(function()
 			local isOverVoid = false
 			local voidCheckTimer = 0
 			local voidGrace = 0
-            local VOID_GRACE_TIME = 0.2
-            local MAX_AIR_TIME = 2.5
+            local VOID_GRACE_TIME = 0.4
+            local MAX_AIR_TIME = ExtendMode.Value == "TweenDown" and 2.3 or 2.5
 
             extPhase = "none"
             extTimer = 0
@@ -2004,8 +2005,8 @@ runcode(function()
 	FlyValue = Fly.CreateSlider({
 		Name = "value",
 		Min = 0,
-		Max = 32,
-		Default = 32,
+		Max = 23,
+		Default = 23,
 		Round = 1
 	})
 	FlyVerticalValue = Fly.CreateSlider({
