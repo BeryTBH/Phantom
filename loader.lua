@@ -19,7 +19,7 @@ end
 
 local HttpService = game:GetService("HttpService")
 local ROOT = "Phantom"
-local REPO_OWNER = "XzynAstralz"
+local REPO_OWNER = "BeryTBH"
 local REPO_NAME = "Phantom"
 local LOADER_PLACE_ID = tostring(game.PlaceId)
 local LOADER_GAME_ID = tonumber(game.GameId) and tostring(game.GameId) or ""
